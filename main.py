@@ -1,9 +1,11 @@
 from env import Environment
 #from agent import Agents
-from greedyagent import GreedyAgents as Agents
+# from greedyagent import GreedyAgents as Agents
+from astar_agent import AStarAgents as Agents
 
 import numpy as np
-
+import time
+    
 if __name__=="__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Multi-Agent Reinforcement Learning for Delivery")
@@ -32,7 +34,9 @@ if __name__=="__main__":
         actions = agents.get_actions(state)
         next_state, reward, done, infos = env.step(actions)
         state = next_state
-        env.render()
+        time.sleep(0.7)
+        # env.render()
+        env.render_nice()
         t += 1
 
     print("Episode finished")

@@ -147,7 +147,7 @@ class GreedyAgents:
                 closest_package_id = None
                 closed_distance = 1000000
                 for j in range(len(self.packages)):
-                    if not self.packages_free[j]:
+                    if not self.packages_p[j]:
                         continue
 
                     pkg = self.packages[j]                

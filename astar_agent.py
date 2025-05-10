@@ -234,20 +234,24 @@ class AStarAgents:
                 closest_package_id = None
                 min_dist = 1e9
                 for j, pkg in enumerate(self.packages):
+                    # Nếu gói hàng đã được giao hoặc không còn hợp lệ thì bỏ qua
                     if pkg is None or not self.packages_free[j]:
                         continue
                     d = self.heuristic((self.robots[i][0], self.robots[i][1]), (pkg[1], pkg[2]))
                     if d < min_dist:
                         min_dist = d
                         closest_package_id = j
+                # If a package is found, set the target to the pickup location
                 if closest_package_id is not None:
                     self.packages_free[closest_package_id] = False
                     self.robots_target[i] = self.packages[closest_package_id][0]
                     pkg = self.packages[closest_package_id]
                     goals.append((pkg[1], pkg[2]))
+                    print(f"Robot {i} assigned to package {closest_package_id + 1} at ({pkg[1]}, {pkg[2]})")
+                # If no package is found, set the goal to the robot's current position
                 else:
-                    # No packages available, set the goal to the robot's current position
                     goals.append((self.robots[i][0], self.robots[i][1]))
+                    print(f"Robot {i} has no package to pick up")
 
         # Find paths for all robots
         paths = self.cbs(starts, goals)
@@ -260,12 +264,32 @@ class AStarAgents:
 
             action = Action.WAIT.value
             if self.robots_target[i] != 'free' and current == goals[i]:
+                # Tại điểm target (có thể là điểm giao hàng hoặc điểm nhặt hàng)
                 if self.robots[i][2] == 0:
-                    # Tại điểm lấy hàng, chưa mang hàng → nhặt hàng
-                    action = Action.PICKUP.value
+                    # Kiểm tra gói hàng chuẩn bị nhặt lên có phải là gói hàng đã được giao không
+                    pkg_id = self.robots_target[i] - 1
+                    
+                    # Đảm bảo robot chỉ nhặt đúng gói hàng được gán
+                    if 0 <= pkg_id < len(self.packages) and self.packages[pkg_id] is not None:
+                        pkg = self.packages[pkg_id]
+                        print(f"Robot {i} was assigned to package {self.robots_target[i]} and is about to pick up package {pkg[0]}")
+                        if (self.robots[i][0], self.robots[i][1]) == (pkg[1], pkg[2]) and self.robots_target[i] == pkg[0]:
+                            # Chưa mang hàng → nhặt hàng
+                            action = Action.PICKUP.value
+                            print(f"Robot {i} picking up package {self.robots_target[i]}")
+                        else:
+                            # Không đúng vị trí hoặc không đúng gói hàng → chờ
+                            print(f"Robot {i} at ({self.robots[i][0]}, {self.robots[i][1]}) cannot pick up package {self.robots_target[i]} at ({pkg[1]}, {pkg[2]})")
+                            action = Action.WAIT.value 
+                    else:
+                        # Gói hàng không hợp lệ hoặc đã được nhặt
+                        print(f"Robot {i} failed to pick up package {self.robots_target[i]}")
+                        self.robots_target[i] = 'free'
+                        action = Action.WAIT.value
                 else:
-                    # Tại điểm giao hàng, đang mang hàng → đặt hàng
+                    # Đang mang hàng → giao hàng
                     action = Action.DROP.value
+                    print(f"Robot {i} dropping off package {self.robots_target[i]}")
                     
             # Reset target if the action is invalid
             if action == Action.PICKUP.value and (self.robots_target[i] == 'free' or pkg is None):

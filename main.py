@@ -1,6 +1,10 @@
 from env import Environment
 #from agent import Agents
-from greedyagent import GreedyAgents as Agents
+# from greedyagent import GreedyAgents as Agents
+# from acoagent import ACOAgents as Agents
+# from agent_thanh import Agents
+from astar_agent import AStarAgents as Agents
+import time
 
 import numpy as np
 
@@ -32,7 +36,8 @@ if __name__=="__main__":
         actions = agents.get_actions(state)
         next_state, reward, done, infos = env.step(actions)
         state = next_state
-        env.render()
+        # time.sleep(0.1)
+        env.render_nice()
         t += 1
 
     print("Episode finished")

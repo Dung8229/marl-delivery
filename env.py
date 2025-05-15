@@ -1,4 +1,5 @@
 import numpy as np
+from colorama import Fore, Style, init
 
 class Robot: 
     def __init__(self, position): 
@@ -41,6 +42,64 @@ class Environment:
         self.done = False
         self.state = None
 
+    def get_color(self, index):
+        """
+        Returns a random color from colorama.Fore.
+        """
+        colors = [
+            Fore.BLACK, Fore.RED, Fore.GREEN, Fore.YELLOW, Fore.MAGENTA, 
+            Fore.CYAN, Fore.LIGHTBLACK_EX, Fore.LIGHTRED_EX, 
+            Fore.LIGHTGREEN_EX, Fore.LIGHTYELLOW_EX, Fore.LIGHTBLUE_EX, 
+            Fore.LIGHTMAGENTA_EX, Fore.LIGHTCYAN_EX
+        ]
+        return colors[index % len(colors)]
+          
+    def render_nice(self):
+        """
+        Render the map with colorama for better visual appeal.
+        Obstacles are represented by 1 (red), free cells by 0 (white),
+        robots by 'R' (green), and packages by 'P' (blue).
+        """
+        # Make a deep copy of the grid
+        grid_copy = [row[:] for row in self.grid]
+        
+        for i, robot in enumerate(self.robots):
+            r, c = robot.position
+            if robot.carrying != 0:
+                color = self.get_color(robot.carrying)
+                grid_copy[r][c] = f'{Fore.BLUE}R{i}{color}P{robot.carrying}{Style.RESET_ALL}'
+            else:
+                grid_copy[r][c] = f'{Fore.BLUE}R{i}{Style.RESET_ALL}'
+        
+        for i, package in enumerate(self.packages):
+            start_r, start_c = package.start
+            target_r, target_c = package.target
+            id = package.package_id
+            color = self.get_color(id)
+            if package.status == 'waiting':
+                grid_copy[start_r][start_c] = f'{color}P{id}{Style.RESET_ALL}'
+                grid_copy[target_r][target_c] = f'{color}T{id}{Style.RESET_ALL}'
+            elif package.status == 'delivered':
+                grid_copy[target_r][target_c] = f'{color}T{id}P{id}{Style.RESET_ALL}'
+            else:
+                grid_copy[target_r][target_c] = f'{color}T{id}{Style.RESET_ALL}'
+        
+        
+        # Print column indices
+        col_indices = '\t'.join([f'{Fore.YELLOW}{i}{Style.RESET_ALL}' for i in range(len(grid_copy[0]))])
+        print(f'\t{col_indices}')
+        
+        for idx, row in enumerate(grid_copy):
+            row_str = []
+            for cell in row:
+                if isinstance(cell, str):
+                    row_str.append(f'{cell}')
+                elif cell == 1:
+                    row_str.append(f'{Fore.WHITE}{cell}{Style.RESET_ALL}')
+                else:
+                    row_str.append(f'{Fore.LIGHTBLACK_EX}{cell}{Style.RESET_ALL}')
+            # Print row index followed by the row content
+            print(f'{Fore.YELLOW}{idx}{Style.RESET_ALL}\t' + '\t'.join(row_str))
     def load_map(self):
         """
         Reads the map file and returns a 2D grid.
